@@ -1,0 +1,80 @@
+---
+description: Architecting dependable large software projects
+globs:
+alwaysApply: false
+---
+Architecting dependable large software projects involves a philosophy centered on modularity, clear interfaces, and foresight, aiming to create systems that are robust, extensible, and scalable. Here’s a step-by-step guide based on the provided source:
+
+### Step 1: Define Your Project Goals and Optimize for Key Qualities
+Before starting, clearly define what your project needs to achieve and prioritize certain qualities.
+*   **Dependability**: The project should be built to last "forever and never breaks".
+*   **Extendability**: It must be easy to add new features and capabilities over time.
+*   **Team Scalability**: Design for teams where very few, preferably one person, work on each section of the problem, allowing them to be insulated from others. This encourages creating many small projects instead of one large one.
+*   **Development Velocity**: Aim for consistent development speed throughout the project's lifecycle, avoiding the typical slowdowns that occur as software ages.
+*   **Risk Reduction**: Proactively identify and mitigate potential failures, such as changes in platforms (APIs, terms of service), language implementations (e.g., Python 2 to 3 transition), hardware, priorities, or the loss of key personnel. Write code explicitly to avoid future "trivial fixes" that can lead to significant context switching and slowdowns.
+
+### Step 2: Modularize and Encapsulate Everything as "Black Boxes"
+The fundamental approach is to break down software into independent, self-contained modules.
+*   **Black Box Principle**: Each module should be a "black box" where its internal workings are hidden, and its functionality is exposed only through well-documented APIs (Application Programming Interfaces) or protocols. Users of a module should not need to understand its internal code.
+*   **Single-Person Ownership**: Ideally, modules should be small enough that one person can write them. This is crucial for team scalability, allowing multiple individuals to work on different modules concurrently without constant coordination.
+*   **API-Driven Reimlementation**: A clear and stable API enables the internal implementation of a module to be completely rewritten or replaced (e.g., if the original developer leaves, or for performance improvements) without affecting any other part of the system that uses its API.
+
+### Step 3: Build a Robust and Portable Base Layer (Helper Libraries)
+Create foundational components that abstract away external dependencies and provide core utilities.
+*   **Platform Layer Wrapper**: Wrap anything you don't own, particularly the operating system or third-party libraries (e.g., SDL). This insulation gives you control over the platform's functionality, ensuring portability and protection from external changes.
+*   **Minimal Demo/Test Application**: Develop a small, simple application specifically to test and verify your platform layer's functionality when porting to new platforms. This makes the porting process much more manageable than trying to port the entire application.
+*   **Consolidate Input/Output**: Standardize how your application handles disparate input and output mechanisms (e.g., treat all buttons from controllers, keyboards, or mice as the same; consolidate multi-touch and mouse pointers).
+*   **Drawing Layer**: Implement a basic drawing library for rendering UI elements, lines, images, and other graphics. Design this layer to be backend-agnostic (e.g., built over OpenGL but capable of using Vulkan).
+*   **Text Rendering with Forward-Thinking API**: Implement simple text rendering first (e.g., bitmap fonts). However, design the text API to accommodate future complexities like TrueType fonts, anti-aliasing, kerning, and different character encodings (e.g., UTF-8, support for right-to-left languages like Arabic) without requiring users of the API to change their code later. Avoid "good enough for now" APIs.
+*   **Independent UI Toolkit**: Develop your own UI components (buttons, sliders, text input fields) rather than relying on operating system-specific ones. This provides better portability and often simplifies development compared to adapting to multiple platform-specific UI paradigms.
+*   **Reusable Helper Libraries**: Place common, non-application-specific functionalities (e.g., file parsing, physics engines, scripting, data storage, networking) into separate helper libraries. These libraries can be reused across any project and improved internally without impacting the applications that use them.
+
+### Step 4: Define and Build the Application's Core (Based on a Primitive)
+Identify the fundamental data unit or concept your application manipulates and build a core around it.
+*   **Identify the Primitive**: Determine the most generalized concept or data format that your application fundamentally operates on. Examples include:
+    *   **Video Editor**: A timeline with clips and animated parameters.
+    *   **Healthcare System**: Healthcare events.
+    *   **Jet Fighter**: The current "state of the world" (e.g., sensor data, fuel, weapon status).
+*   **Choose a Consistent Primitive**: Strive for a single, consistent primitive to avoid complexity arising from converting between different data representations. The choice of primitive dictates the kind of software you can build.
+*   **Core Black Box with Guarantees**: Create an authoritative core as a black box that stores and manages this primitive data. This core should enforce consistency rules (e.g., no negative clip times), manage data integrity, and ideally include features like automatic undo/redo for changes made through its API.
+*   **Decouple Storage**: For data-heavy systems (like a healthcare system), the core's internal storage mechanism (e.g., SQL database, cloud vendor) should be completely hidden behind its API. This allows for changing or rewriting the storage backend without affecting the applications using the core.
+*   **Glue Code for Legacy Systems**: When integrating with older systems, write "glue code" that translates between your new core's API and the legacy system's API. This enables a gradual migration of data and functionality, avoiding disruptive "big bang" switchovers.
+*   **Multiple Language Bindings**: Provide APIs for different programming languages (e.g., C, C++, Python) on top of the core's primary API, allowing various developer groups to access the system in their preferred language.
+
+### Step 5: Implement a Plugin Architecture for Extensibility
+Prevent the core from becoming a monolithic entity by allowing external functionalities to "plug in".
+*   **Decentralize Functionality**: Design a plugin architecture where specific features (e.g., video codecs, visual effects, sensors, UI panels) are implemented as independent plugins. This keeps the core small and manageable.
+*   **Isolated Development**: Plugins typically reside in separate dynamically linked libraries (DLLs) and can be developed, built, and added to the system independently. Developers creating plugins only need to adhere to the core's API, fostering isolated work.
+*   **Declarative Plugins**: Plugins should declare their capabilities, inputs, outputs, and parameters. This allows the core or other parts of the system to dynamically discover and utilize their functionality, even generating UI elements for them.
+*   **Hierarchical Plugins**: Plugin systems can extend to different layers, such as having plugins for the platform layer itself (e.g., a specific controller plugin for the Betray platform library).
+*   **Optional Dependencies**: Design plugins as optional components, allowing the core system to function even if certain plugins are not present. This reduces initial dependencies for building the core.
+*   **Launcher Application**: Create a simple launcher application that initializes the platform layer, loads the core, and then discovers and loads all available plugins.
+*   **Separate Core and UI**: Crucially, design the core to be independent of any specific user interface. This enables using the core in different contexts, such as a command-line tool for server-side processing or various UI applications.
+
+### Step 6: Develop Extensive Tooling
+Build a comprehensive suite of tools that interact with your core and plugins, even if they are not part of the final product.
+*   **Essential for Development and Testing**: Tools are vital for enabling different teams and contractors to test their components in isolation and understand the system's behavior.
+*   **Tool Examples**:
+    *   **Recorders**: Create tools to record all data flowing through the core (like a black box recorder).
+    *   **Playback Systems**: Tools to replay recorded data for testing and simulation purposes.
+    *   **APIs for Simulation**: Provide scripting APIs (e.g., Python) to simulate various events, failures, or specific scenarios for testing.
+    *   **Loggers**: Tools to display and log real-time data and system events.
+    *   **Visualizers**: Applications to visualize the current state of the system or data flows.
+    *   **Full Simulators**: Comprehensive simulators that replicate the behavior of the entire system for advanced testing.
+*   **Facilitate Collaboration**: Tooling helps different engineering teams (e.g., those building missiles, cockpit displays, or sensors for a jet fighter) understand the expected data formats and interactions, making integration smoother.
+*   **Open Sourcing Core**: Consider open-sourcing the core protocol or API (without revealing proprietary implementation details) to foster broader participation and simplify bidding for contractors, as they can build compatible components.
+
+### Step 7: Prioritize Format Design as a Core Discipline
+Recognize that many aspects of software—APIs, files, protocols, and programming languages—are essentially "formats".
+*   **Semantics vs. Structure**: Differentiate between the meaning (semantics) and the arrangement (structure) of data. Often, you want a simple structure that can carry complex semantics, allowing for reusable parsers or loaders (e.g., a JSON loader can parse any JSON, regardless of its semantic content).
+*   **Implementability**: Design formats to be small and simple to implement. Overly complex formats lead to fewer, buggier implementations and compatibility issues. Simpler formats generally result in higher quality and more numerous implementations.
+*   **Make Clear Choices**: Avoid designing formats that try to do "a million things." Make definitive choices, even if it means not everyone is perfectly happy, as supporting too many options increases the implementation burden for everyone involved.
+*   **Manage Constraints and Interactions**: Clearly define the requirements and guarantees of your format. Carefully consider the number of interactions and levels of complexity within the system to avoid making it either too rigid or too difficult to navigate.
+*   **Implementation Freedom**: Design your APIs and formats to hide implementation details. This allows the underlying technology or approach to change in the future without affecting users of the API (e.g., changing from a bitmap text renderer to a TrueType one, or switching database backends).
+*   **"Your World" Plugin Philosophy**: When designing plugin systems, prefer making components that "plug into your world" (your system's API and conventions) rather than your system having to adapt to external "worlds." This maintains control and consistency.
+
+### Step 8: Plan for Redundancy and Scalability (for Critical Systems)
+For highly critical applications like a jet fighter, plan for system resilience from the outset.
+*   **Redundant Cores**: Implement multiple, redundant cores that can operate in parallel and provide the same consistent API to other system components. This ensures functionality even if one core fails.
+*   **Phased Implementation**: Start by developing a single, simple core to quickly get components connected and enable initial development. Then, you can later replace or augment this with a more complex, redundant system (e.g., multiple voting cores) without requiring any changes from the modules that use its API.
+*   **Generalization Beyond Specific Use-Cases**: Design the core system and its communication protocols to be generalized, allowing them to be reused for different applications (e.g., a jet fighter's system could also be used for tanks or other vehicles). This maximizes the reusability of knowledge and components across projects.

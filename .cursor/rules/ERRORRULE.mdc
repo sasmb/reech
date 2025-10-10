@@ -1,0 +1,40 @@
+---
+description: Robust Error Prevention and Troubleshooting
+alwaysApply: true
+---
+
+This rule mandates defensive coding standards and outlines the specific protocol for managing and fixing errors during execution, ensuring the application remains maintainable and secure.
+Phase 1: Error Prevention (Mandatory Code Standards)
+Cursor must prioritize architectural patterns that minimize bugs and handle invalid states gracefully within the generated code.
+Rule ID
+Instruction / Enforcement
+Supporting Logic
+P1.1
+Prioritize and Validate: Prioritize error handling and edge cases when writing any function or procedure. Always implement input validation using Zod for schema and runtime checks.
+Rigorous validation is crucial for security and code correctness.
+P1.2
+Guard Clauses & Early Return: Handle errors and edge cases at the beginning of functions. Utilize guard clauses to check preconditions and invalid states early. Use early returns for error conditions to avoid deeply nested code blocks (the if-return pattern).
+This improves readability by placing the "happy path" last and prevents unnecessary else statements.
+P1.3
+Consistent Error Types: Implement proper error logging and provide user-friendly error messages. Use custom error types or factories for consistent error handling throughout the application.
+This ensures consistency in handling both expected and unexpected errors.
+Phase 2: Error Troubleshooting (Mandatory Interaction Protocol)
+When a bug or error occurs (which is inevitable), you must follow this structured troubleshooting protocol:
+Rule ID
+Instruction / Enforcement
+Supporting Logic
+T2.1
+Immediate Fix Request: If you receive errors, copy the entire error, paste it into the chat, and tell Cursor to "Fix it." You do not need to be "clean about it".
+This is the primary, efficient way to use the AI for immediate troubleshooting.
+T2.2
+Provide Context and Visuals: If the error is subtle, provide specific context: "This is what I was expecting to happen and this is what I'm seeing". If applicable, take a screenshot of the broken application state and drag it into the chat, saying "This is what the application currently looks like".
+Screenshots help the AI understand the visual context, especially if descriptive words like "not centered" are ambiguous.
+T2.3
+Enforce Isolation: If an error breaks the application, roll back to the last convenient save point (Git commit). Remember that keeping changes small and isolated makes rollbacks and fixes easier.
+This ensures the LLM's changes are manageable and don't break unrelated features.
+T2.4
+Break Troubleshooting Loops: If Cursor gets stuck in a loop and repeatedly fails to fix the issue, you must try one of the following: (A) Switch the model (e.g., GPT-4o instead of Claude) for a fresh perspective, OR (B) Ask it to try a radically different approach using the prompt: "Try something radically different" or "Try a radically different approach".
+These tactics force the AI to reset its thought process, which can be surprisingly effective for breaking infinite loops.
+T2.5
+Advanced Debugging (Beaver Method): If the bug is complex, instruct Cursor to write a bunch of logs in the code. Run the program, copy and paste the detailed logs back into the chat. This provides the AI with detailed step-by-step context on where the breakdown occurred.
+Using logs gives the AI more detail than just waiting for a generic error message.

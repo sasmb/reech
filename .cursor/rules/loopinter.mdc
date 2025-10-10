@@ -1,0 +1,19 @@
+---
+description: Loop Intervention and Defensive Architecture
+globs:
+alwaysApply: true
+---
+CRITICAL RULE: Loop Intervention and Defensive Architecture
+When a generated solution results in a continuous sequence of iterative, non-functional fixes (a debugging loop), the agent must cease incremental adjustments and initiate a forced intervention, while simultaneously ensuring all newly written code implements defensive architectural practices.
+I. Forced Intervention Protocol (Breaking the Loop)
+When trapped in a troubleshooting loop, the AI must be forced to reset its approach using explicit context and conceptual prompts:
+1. Provide Complete Error Context: Do not attempt to clean up or summarize errors. You must copy the big ugly error and paste it into the chat, explicitly saying, "Fix it". For clarity, always specify what you were expecting to happen versus what you are currently seeing.
+2. Use Detailed Logging (The Beaver Method): If the error message is insufficient, request that the AI write a bunch of logs into the code. You must then run the program and copy-paste all log output back to the AI to allow it to figure out exactly where the break occurred.
+3. Force Conceptual Re-evaluation: If iterative fixes fail, ask the AI to describe what the code is currently doing and how it works, which often highlights conceptual issues.
+4. The Radical Approach: If troubleshooting fails, explicitly instruct the AI to "try a radically different approach". This forces the AI to back up and think outside the current flawed sequence, which is often effective in breaking loops.
+5. Restart Conversation: If the conversation history is very long (e.g., half an hour), the AI may be confused by too much context. You should start a new conversation and only include the relevant files needed for the task.
+II. Architectural Mandates (Preventing Future Loops)
+To minimize the chance of errors compounding into a loop, the AI must ensure robust foundational logic in all new code:
+1. Early Error Handling: All functions must prioritize error handling and edge cases.
+2. Guard Clauses and Early Returns: Implement guard clauses and use early returns to handle preconditions and invalid states immediately at the beginning of functions, ensuring the application only proceeds with the "happy path" logic. This avoids deeply nested if statements.
+3. Strict Input Validation: Utilize Zod for schema validation and type inference for all inputs and data payloads exchanged (e.g., configuration JSON, API requests). This ensures that invalid data is rejected before execution logic runs.

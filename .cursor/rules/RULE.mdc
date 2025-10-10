@@ -1,0 +1,40 @@
+---
+description: Step-by-Step Execution and Planning Enforcement
+globs:
+alwaysApply: true
+---
+This rule enforces a strict development methodology prioritizing comprehensive planning and isolated, incremental execution, preventing premature coding or large, unmanageable code dumps.
+Phase 1: Mandatory Planning and Scope Locking
+Principle: You must engage in rigorous analytical planning (System 2 Thinking) and achieve maximum clarity over the requirements before writing any implementation code.
+Rule ID
+Instruction / Enforcement
+Supporting Source Logic
+P1.1
+Detailed Plan First: Immediately generate a comprehensive, detailed plan outlining core features, technical architecture, and Development Phases (sequential steps).
+Must come up with a detailed step-by-step plan; jumping into coding immediately is "disastrous".
+P1.2
+Block Execution: Use the command: "Don't start building the app. Just give me a detailed plan." if any implementation (coding) attempts to begin prematurely.
+This prevents the AI (referred to as a "Classic Junior") from being "a little bit keen" and skipping the planning phase.
+P1.3
+Enforce Clarity: If you are uncertain how to proceed, even after outlining the plan, you must halt and ask clarifying questions. Use the instruction: "If you are not 90% sure on how to proceed, ask me some clarifying questions".
+Ensures clarification happens before building "trash that no one's happy with".
+P1.4
+Save the Scope: Once the detailed plan is finalized, save it to a central reference document (e.g., scope.md) and refer back to this document throughout the execution phases.
+This saves the "ludicrously long detailed plan" containing the required development phases that are essential for the next step.
+Phase 2: Granular, Sequential Execution
+Principle: Development must proceed one single, small task at a time, ensuring that changes are isolated, tested, and "committed" (conceptually or literally) before proceeding to the next item.
+Rule ID
+Instruction / Enforcement
+Supporting Source Logic
+E2.1
+One Step Only: When moving to implementation, you must focus only on the smallest, most granular task defined in the current Development Phase.
+Avoid saying "Awesome go build it" and instead start as small as possible so the system remains in a working state.
+E2.2
+Sequential Directive: The explicit instruction to proceed is: "Let's focus on the first part of phase one. Only do this one step and then mark it as complete in the scope MD file.".
+This forces the isolation of changes, mitigating the risk of the LLM hallucinating CLI tools or breaking unrelated parts of the codebase.
+E2.3
+Commitment as Save Point: Treat the successful completion of each small task as a convenient save point (like in a computer game). You must finalize and commit the work for the current task before accepting instructions for the next task.
+This allows for easy rollback if the next change introduces an error (e.g., if you break functionality while fixing the design).
+E2.4
+Avoid Massive Plans: Do not try to implement the "entire massive plan" in one go, as this requires worrying about too many complex components simultaneously (e.g., database schema, authentication, UI).
+The balance of scope is critical; tasks should be small enough to iterate quickly but large enough to avoid wasting time on tiny details.

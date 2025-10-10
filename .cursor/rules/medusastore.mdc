@@ -1,0 +1,830 @@
+---
+description: store module
+alwaysApply: true
+---
+
+
+IStoreModuleService Reference
+This section of the documentation provides a reference to the IStoreModuleService interface’s methods. This is the interface developers use to use the functionalities provided by the Store Module.
+Note: You should only use the methods in this reference when implementing complex customizations. For common cases, check out available workflows instead.
+The main service interface for the Store Module.
+Methods#
+createStores
+deleteStores
+listAndCountStores
+listStores
+restoreStores
+retrieveStore
+softDeleteStores
+updateStores
+upsertStores
+
+
+
+store - JS SDK Admin Reference
+This documentation provides a reference to the sdk.admin.store set of methods used to send requests to Medusa's Admin API routes.
+retrieve#
+This method retrieves a store by its ID. It sends a request to the Get Store API route.
+Example#
+To retrieve a store by its ID:
+Code
+Ask AI
+sdk.admin.store.retrieve("store_123")
+.then(({ store }) => {
+console.log(store)
+})
+To specify the fields and relations to retrieve:
+Code
+Ask AI
+sdk.admin.store.retrieve("store_123", {
+fields: "id,*supported_currencies"
+})
+.then(({ store }) => {
+console.log(store)
+})
+Learn more about the fields property in the API reference.
+Parameters#
+id
+string
+The ID of the store to retrieve.
+query
+AdminStoreParams
+Optional
+Configure the fields and relations to retrieve in the store.
+headers
+ClientHeaders
+Optional
+Headers to pass in the request.
+Returns#
+Promise
+Promise
+The store's details.
+list#
+This method retrieves a list of stores. It sends a request to the List Stores API route.
+Example#
+To retrieve the list of stores:
+Code
+Ask AI
+sdk.admin.store.list()
+.then(({ stores, count, limit, offset }) => {
+console.log(stores)
+})
+To configure the pagination, pass the limit and offset query parameters.
+For example, to retrieve only 10 items and skip 10 items:
+Code
+Ask AI
+sdk.admin.store.list({
+limit: 10,
+offset: 10
+})
+.then(({ stores, count, limit, offset }) => {
+console.log(stores)
+})
+Using the fields query parameter, you can specify the fields and relations to retrieve in each store:
+Code
+Ask AI
+sdk.admin.store.list({
+fields: "id,*supported_currencies"
+})
+.then(({ stores, count, limit, offset }) => {
+console.log(stores)
+})
+Learn more about the fields property in the API reference.
+Parameters#
+query
+AdminStoreListParams
+Optional
+Filters and pagination configurations.
+headers
+ClientHeaders
+Optional
+Headers to pass in the request.
+Returns#
+Promise
+Promise
+The list of stores.
+update#
+This method updates a store. It sends a request to the Update Store API route.
+Example#
+Code
+Ask AI
+sdk.admin.store.update("store_123", {
+name: "My Store",
+})
+.then(({ store }) => {
+console.log(store)
+})
+Parameters#
+id
+string
+The ID of the store to update.
+body
+AdminUpdateStore
+The details of the store to update.
+query
+SelectParams
+Optional
+Configure the fields and relations to retrieve in the store.
+headers
+ClientHeaders
+Optional
+Headers to pass in the request.
+Returns#
+Promise
+Promise
+The store's details.
+
+
+Store Module's Admin Widget Injection Zones
+This reference shows all the injection zones in the Medusa Admin related to the Store Module.
+Store Pages#
+Injection Zone Name Description Additional Props
+store.details.before
+Added at the top of a store's details page.
+Type DetailWidgetProps imported from @medusajs/framework/types
+{
+data, // AdminStore object
+}
+store.details.after
+Added at the bottom of a store's details page.
+Type DetailWidgetProps imported from @medusajs/framework/types
+{
+data, // AdminStore object
+}
+
+
+
+import { model } from "@medusajs/framework/utils"
+import StoreCurrency from "./currency"
+const Store = model
+.define("Store", {
+id: model.id({ prefix: "store" }).primaryKey(),
+name: model.text().default("Medusa Store").searchable(),
+default_sales_channel_id: model.text().nullable(),
+default_region_id: model.text().nullable(),
+default_location_id: model.text().nullable(),
+metadata: model.json().nullable(),
+supported_currencies: model.hasMany(() => StoreCurrency, {
+mappedBy: "store",
+}),
+})
+.cascades({
+delete: ["supported_currencies"],
+})
+export default Store
+
+
+
+Store Module
+In this section of the documentation, you will find resources to learn more about the Store Module and how to use it in your application.
+Looking for no-code docs? Refer to the Medusa Admin User Guide to learn how to manage your store using the dashboard.
+Medusa has store related features available out-of-the-box through the Store Module. A module is a standalone package that provides features for a single domain. Each of Medusa's commerce features are placed in Commerce Modules, such as this Store Module.
+Note: Learn more about why modules are isolated in this documentation.
+Store Features#
+Store Management: Create and manage stores in your application.
+Multi-Tenancy Support: Create multiple stores, each having its own configurations.
+How to Use Store Module's Service#
+In your Medusa application, you build flows around Commerce Modules. A flow is built as a Workflow, which is a special function composed of a series of steps that guarantees data consistency and reliable roll-back mechanism.
+You can build custom workflows and steps. You can also re-use Medusa's workflows and steps, which are provided by the @medusajs/medusa/core-flows package.
+For example:
+src/workflows/create-store.ts
+Ask AI
+import {
+createWorkflow,
+WorkflowResponse,
+createStep,
+StepResponse,
+} from "@medusajs/framework/workflows-sdk"
+import { Modules } from "@medusajs/framework/utils"
+const createStoreStep = createStep(
+"create-store",
+async ({}, { container }) => {
+const storeModuleService = container.resolve(Modules.STORE)
+const store = await storeModuleService.createStores({
+name: "My Store",
+supported_currencies: [{
+currency_code: "usd",
+is_default: true,
+}],
+})
+return new StepResponse({ store }, store.id)
+},
+async (storeId, { container }) => {
+if(!storeId) {
+return
+}
+const storeModuleService = container.resolve(Modules.STORE)
+await storeModuleService.deleteStores([storeId])
+}
+)
+export const createStoreWorkflow = createWorkflow(
+"create-store",
+() => {
+const { store } = createStoreStep()
+return new WorkflowResponse({ store })
+}
+)
+You can then execute the workflow in your custom API routes, scheduled jobs, or subscribers:
+API Route
+Subscriber
+Scheduled Job
+Ask AI
+src/api/workflow/route.ts
+Show Imports
+import { createStoreWorkflow } from "../../workflows/create-store"
+export async function GET(
+req: MedusaRequest,
+res: MedusaResponse
+) {
+const { result } = await createStoreWorkflow(req.scope)
+.run()
+res.send(result)
+}
+Learn more about workflows in this documentation.
+
+
+
+What is a Workflow?#
+In digital commerce you typically have many systems involved in your operations. For example, you may have an ERP system that holds product master data and accounting reports, a CMS system for content, a CRM system for managing customer campaigns, a payment service to process credit cards, and so on. Sometimes you may even have custom built applications that need to participate in the commerce stack. One of the biggest challenges when operating a stack like this is ensuring consistency in the data spread across systems.
+Medusa has a built-in durable execution engine to help complete tasks that span multiple systems. You orchestrate your operations across systems in Medusa instead of having to manage it yourself. Other commerce platforms don't have this capability, which makes them a bottleneck to building customizations and iterating quickly.
+A workflow is a series of queries and actions, called steps, that complete a task. You construct a workflow similar to how you create a JavaScript function.
+However, unlike regular functions, workflows:
+Create an internal representation of your steps, allowing you to track them and their progress.
+Support defining roll-back logic for each step, so that you can handle errors gracefully and your data remain consistent across systems.
+Perform long actions asynchronously, giving you control over when a step starts and finishes.
+You implement all custom flows within workflows, then execute them from API routes, subscribers, and scheduled jobs.
+How to Create and Execute a Workflow?#
+1. Create the Steps#
+A workflow is made of a series of steps. A step is created using createStep from the Workflows SDK.
+Create the file src/workflows/hello-world.ts with the following content:
+Example of workflow file in the application's directory structure
+src/workflows/hello-world.ts
+Ask AI
+import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
+const step1 = createStep(
+"step-1",
+async () => {
+return new StepResponse(`Hello from step one!`)
+}
+)
+The createStep function accepts the step's unique name as a first parameter, and the step's function as a second parameter.
+Steps must return an instance of StepResponse, whose parameter is the data to return to the workflow executing the step.
+Steps can accept input parameters. For example, add the following to src/workflows/hello-world.ts:
+src/workflows/hello-world.ts
+Ask AI
+type WorkflowInput = {
+name: string
+}
+const step2 = createStep(
+"step-2",
+async ({ name }: WorkflowInput) => {
+return new StepResponse(`Hello ${name} from step two!`)
+}
+)
+This adds another step whose function accepts as a parameter an object with a name property.
+2. Create a Workflow#
+Next, add the following to the same file to create the workflow using the createWorkflow function:
+src/workflows/hello-world.ts
+Ask AI
+import {
+// other imports...
+createWorkflow,
+WorkflowResponse,
+} from "@medusajs/framework/workflows-sdk"
+// ...
+const myWorkflow = createWorkflow(
+"hello-world",
+function (input: WorkflowInput) {
+const str1 = step1()
+// to pass input
+const str2 = step2(input)
+return new WorkflowResponse({
+message: str2,
+})
+}
+)
+export default myWorkflow
+The createWorkflow function accepts the workflow's unique name as a first parameter, and the workflow's function as a second parameter. The workflow can accept input which is passed as a parameter to the function.
+The workflow must return an instance of WorkflowResponse, whose parameter is returned to workflow executors.
+3. Execute the Workflow#
+You can execute a workflow from different customizations:
+Execute in an API route to expose the workflow's functionalities to clients.
+Execute in a subscriber to use the workflow's functionalities when a commerce operation is performed.
+Execute in a scheduled job to run the workflow's functionalities automatically at a specified repeated interval.
+To execute the workflow, invoke it passing the Medusa container as a parameter. Then, use its run method:
+API Route
+Subscriber
+Scheduled Job
+Ask AI
+src/api/workflow/route.ts
+Show Imports
+import myWorkflow from "../../workflows/hello-world"
+export async function GET(
+req: MedusaRequest,
+res: MedusaResponse
+) {
+const { result } = await myWorkflow(req.scope)
+.run({
+input: {
+name: "John",
+},
+})
+res.send(result)
+}
+4. Test Workflow#
+To test out your workflow, start your Medusa application:
+npm
+yarn
+pnpm
+Ask AI
+npm run dev
+Then, if you added the API route above, send a GET request to /workflow:
+Code
+Ask AI
+curl http://localhost:9000/workflow
+You’ll receive the following response:
+Example Response
+Ask AI
+{
+"message": "Hello John from step two!"
+}
+Access Medusa Container in Workflow Steps#
+A step receives an object as a second parameter with configurations and context-related properties. One of these properties is the container property, which is the Medusa container to allow you to resolve Framework and commerce tools in your application.
+For example, consider you want to implement a workflow that returns the total products in your application. Create the file src/workflows/product-count.ts with the following content:
+src/workflows/product-count.ts
+Ask AI
+Show Imports
+} from "@medusajs/framework/workflows-sdk"
+const getProductCountStep = createStep(
+"get-product-count",
+async (_, { container }) => {
+const productModuleService = container.resolve("product")
+const [, count] = await productModuleService.listAndCountProducts()
+return new StepResponse(count)
+}
+)
+const productCountWorkflow = createWorkflow(
+"product-count",
+function () {
+const count = getProductCountStep()
+return new WorkflowResponse({
+count,
+})
+}
+)
+export default productCountWorkflow
+In getProductCountStep, you use the container to resolve the Product Module's main service. Then, you use its listAndCountProducts method to retrieve the total count of products and return it in the step's response. You then execute this step in the productCountWorkflow.
+You can now execute this workflow in a custom API route, scheduled job, or subscriber to get the total count of products.
+
+
+
+restoreStores - Store Module Reference
+This documentation provides a reference to the restoreStores method. This belongs to the Store Module.
+Note: You should only use this methods when implementing complex customizations. For common cases, check out available workflows instead.
+This method restores a soft deleted store by its IDs.
+Example#
+Code
+Ask AI
+await storeModuleService.restoreStores(["store_123", "store_321"])
+Parameters#
+storeIds
+string[]
+The IDs of the stores.
+config
+RestoreReturn
+Optional
+Configurations determining which relations to restore along with each of the store. You can pass to its returnLinkableKeys property any of the store's relation attribute names.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise>
+An object that includes the IDs of related records that were restored. If there are no related records restored, the promise resolves to void.
+
+
+
+
+retrieveStore - Store Module Reference
+This documentation provides a reference to the retrieveStore method. This belongs to the Store Module.
+Note: You should only use this methods when implementing complex customizations. For common cases, check out available workflows instead.
+This method retrieves a store by its ID.
+Example#
+Code
+Ask AI
+const store = await storeModuleService.retrieveStore("store_123")
+Parameters#
+id
+string
+The ID of the store.
+config
+FindConfig
+Optional
+The configurations determining how the store is retrieved. Its properties, such as select or relations, accept the attributes or relations associated with a store.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+The retrieved store.
+
+
+
+
+softDeleteStores - Store Module Reference
+This documentation provides a reference to the softDeleteStores method. This belongs to the Store Module.
+Note: You should only use this methods when implementing complex customizations. For common cases, check out available workflows instead.
+This method soft deletes a store by its IDs.
+Example#
+Code
+Ask AI
+await storeModuleService.softDeleteStores([
+"store_123",
+"store_321",
+])
+Parameters#
+storeIds
+string[]
+The IDs of the stores.
+config
+SoftDeleteReturn
+Optional
+An object that is used to specify an entity's related entities that should be soft-deleted when the main entity is soft-deleted.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise>
+An object that includes the IDs of related records that were also soft deleted. If there are no related records, the promise resolves to void.
+
+
+
+Store - Store Module Data Models Reference
+This documentation provides a reference to the Store data model. It belongs to the Store Module.
+Source Code
+id
+PrimaryKeyModifier
+The ID of the store.
+name
+TextProperty
+The name of the store
+supported_currencies
+HasMany
+The associated supported_currencies.
+default_sales_channel_id
+TextProperty
+Optional
+The ID of the store's default sales channel.
+default_region_id
+TextProperty
+Optional
+The ID of the store's default region.
+default_location_id
+TextProperty
+Optional
+The ID of the store's default stock location.
+metadata
+JSONProperty
+Optional
+Holds custom data in key-value pairs.
+
+
+Store - Store Module Data Models Reference
+This documentation provides a reference to the Store data model. It belongs to the Store Module.
+Source Code
+id
+PrimaryKeyModifier
+The ID of the store.
+name
+TextProperty
+The name of the store
+supported_currencies
+HasMany
+The associated supported_currencies.
+default_sales_channel_id
+TextProperty
+Optional
+The ID of the store's default sales channel.
+default_region_id
+TextProperty
+Optional
+The ID of the store's default region.
+default_location_id
+TextProperty
+Optional
+The ID of the store's default stock location.
+metadata
+JSONProperty
+Optional
+Holds custom data in key-value pairs.
+
+
+
+Store Module Data Models Reference
+This documentation provides a reference to the data models in the Store Module
+Relations Overview#
+Store
+StoreCurrency
+supported_currencies
+Data Models#
+
+
+
+updateStores - Store Module Reference
+This documentation provides a reference to the updateStores method. This belongs to the Store Module.
+Note: You should only use this methods when implementing complex customizations. For common cases, check out available workflows instead.
+updateStores(id, data, sharedContext?): Promise#
+This method updates an existing store.
+Example#
+Code
+Ask AI
+const store = await storeModuleService.updateStores("store_123", {
+name: "Acme",
+})
+Parameters#
+id
+string
+The ID of the store.
+data
+UpdateStoreDTO
+The attributes to update in the store.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+The updated store.
+updateStores(selector, data, sharedContext?): Promise#
+This method updates existing stores matching the specified filters.
+Example#
+Code
+Ask AI
+const store = await storeModuleService.updateStores(
+{
+name: ["Acme"],
+},
+{
+}
+)
+Parameters#
+selector
+FilterableStoreProps
+The filters specifying which stores to update.
+data
+UpdateStoreDTO
+The attributes to update in the store.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+The updated stores.
+
+
+
+deleteStores - Store Module Reference
+This documentation provides a reference to the deleteStores method. This belongs to the Store Module.
+Note: You should only use this methods when implementing complex customizations. For common cases, check out available workflows instead.
+deleteStores(ids, sharedContext?): Promise#
+This method deletes stores by their IDs.
+Example#
+Code
+Ask AI
+await storeModuleService.deleteStores(["store_123", "store_321"])
+Parameters#
+ids
+string[]
+The IDs of the stores.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+Resolves when the stores are deleted successfully.
+deleteStores(id, sharedContext?): Promise#
+This method deletes a store by its ID.
+Example#
+Code
+Ask AI
+await storeModuleService.deleteStores("store_123")
+Parameters#
+id
+string
+The ID of the store.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+Resolves when the store is deleted successfully.
+
+
+
+createStores - Store Module Reference
+This documentation provides a reference to the createStores method. This belongs to the Store Module.
+Note: You should only use this methods when implementing complex customizations. For common cases, check out available workflows instead.
+createStores(data, sharedContext?): Promise#
+This method creates stores.
+Example#
+Code
+Ask AI
+const stores = await storeModuleService.createStores([
+{
+name: "Acme",
+supported_currencies: [{ currency_code: "usd", is_default: true }, { currency_code: "eur" }],
+},
+{
+name: "Acme 2",
+supported_currencies: [{currency_code: "usd", is_default: true}],
+},
+])
+Parameters#
+data
+CreateStoreDTO[]
+The stores to be created.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+The created stores.
+createStores(data, sharedContext?): Promise#
+This method creates a store.
+Example#
+Code
+Ask AI
+const store = await storeModuleService.createStores({
+name: "Acme",
+supported_currencies: [{ currency_code: "usd", is_default: true }, { currency_code: "eur" }],
+})
+Parameters#
+data
+CreateStoreDTO
+The store to be created.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+The created store.
+
+
+
+listAndCountStores - Store Module Reference
+This documentation provides a reference to the listAndCountStores method. This belongs to the Store Module.
+Note: You should only use this methods when implementing complex customizations. For common cases, check out available workflows instead.
+This method retrieves a paginated list of stores along with the total count of available stores satisfying the provided filters.
+Example#
+To retrieve a list of stores using their IDs:
+Code
+Ask AI
+const [stores, count] = await storeModuleService.listAndCountStores(
+{
+id: ["store_123", "store_321"],
+}
+)
+By default, only the first 15 records are retrieved. You can control pagination by specifying the skip and take properties of the config parameter:
+Code
+Ask AI
+const [stores, count] = await storeModuleService.listAndCountStores(
+{
+id: ["store_123", "store_321"],
+},
+{
+take: 20,
+skip: 2,
+}
+)
+Parameters#
+filters
+FilterableStoreProps
+Optional
+The filters to apply on the retrieved stores.
+config
+FindConfig
+Optional
+The configurations determining how the store is retrieved. Its properties, such as select or relations, accept the attributes or relations associated with a store.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise<[StoreDTO[], number]>
+The list of stores along with their total count. 
+
+
+
+
+
+listStores - Store Module Reference
+This documentation provides a reference to the listStores method. This belongs to the Store Module.
+Note: You should only use this methods when implementing complex customizations. For common cases, check out available workflows instead.
+This method retrieves a paginated list of stores based on optional filters and configuration.
+Example#
+To retrieve a list of stores using their IDs:
+Code
+Ask AI
+const stores = await storeModuleService.listStores({
+id: ["store_123", "store_321"],
+})
+By default, only the first 15 records are retrieved. You can control pagination by specifying the skip and take properties of the config parameter:
+Code
+Ask AI
+const stores = await storeModuleService.listStores(
+{
+id: ["store_123", "store_321"],
+},
+{
+take: 20,
+skip: 2,
+}
+)
+Parameters#
+filters
+FilterableStoreProps
+Optional
+The filters to apply on the retrieved stores.
+config
+FindConfig
+Optional
+The configurations determining how the store is retrieved. Its properties, such as select or relations, accept the attributes or relations associated with a store.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+The list of stores.
+
+
+
+upsertStores - Store Module Reference
+This documentation provides a reference to the upsertStores method. This belongs to the Store Module.
+Note: You should only use this methods when implementing complex customizations. For common cases, check out available workflows instead.
+upsertStores(data, sharedContext?): Promise#
+This method updates or creates stores if they don't exist.
+Example#
+Code
+Ask AI
+const stores = await storeModuleService.upsertStores([
+{
+id: "store_123",
+name: "Acme",
+},
+{
+name: "Acme 2",
+supported_currencies: [{currency_code: "usd", is_default: true}],
+},
+])
+Parameters#
+data
+UpsertStoreDTO[]
+The attributes in the stores to be created or updated.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+The created or updated stores.
+upsertStores(data, sharedContext?): Promise#
+This method updates or creates a store if it doesn't exist.
+Example#
+Code
+Ask AI
+const store = await storeModuleService.upsertStores({
+id: "store_123",
+name: "Acme",
+})
+Parameters#
+data
+UpsertStoreDTO
+The attributes in the store to be created or updated.
+sharedContext
+Context
+Optional
+A context used to share resources, such as transaction manager, between the application and the module.
+Returns#
+Promise
+Promise
+The created or updated store.
