@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { useSessionContext } from '@supabase/auth-helpers-react';
+import { createClient } from '@/lib/supabase/client';
+import type { Session } from '@supabase/supabase-js';
 
 type AuthMode = 'sign_in' | 'sign_up';
 
@@ -28,8 +29,28 @@ export function AuthCard({
   footerCta,
   footerHref,
 }: AuthCardProps) {
-  const { supabaseClient, session, isLoading } = useSessionContext();
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const supabaseClient = useMemo(() => createClient(), []);
   const router = useRouter();
+
+  useEffect(() => {
+    // Get initial session
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabaseClient]);
 
   useEffect(() => {
     if (!isLoading && session) {

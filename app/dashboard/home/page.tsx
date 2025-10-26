@@ -1,19 +1,14 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/server';
 import { DashboardEmptyState } from '@/components/dashboard/dashboard-empty-state';
 import {
   DashboardStoreList,
   type DashboardStoreMembership,
   type DashboardMembershipTenant,
 } from '@/components/dashboard/dashboard-store-list';
-import type { Database } from '@/lib/supabase-server';
 
 export default async function DashboardHomePage() {
-  const cookieStore = cookies();
-  const supabase = createServerComponentClient<Database>({
-    cookies: () => cookieStore,
-  });
+  const supabase = await createClient();
 
   const {
     data: { session },

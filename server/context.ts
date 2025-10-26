@@ -30,63 +30,23 @@
 
 import { type inferAsyncReturnType } from '@trpc/server';
 import { type FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
-import {
-  CookieAuthStorageAdapter,
-  createSupabaseClient,
-  type CookieOptions,
-} from '@supabase/auth-helpers-shared';
-import { RequestCookies, ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies';
+import { createServerClient, parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
 import type { Database } from '@/lib/supabase-server';
 import { getSupabaseConfig } from '@/lib/supabase-server';
 
-class FetchRequestAuthStorageAdapter extends CookieAuthStorageAdapter {
-  constructor(
-    private readonly requestCookies: RequestCookies,
-    private readonly responseCookies: ResponseCookies,
-    cookieOptions?: CookieOptions,
-  ) {
-    super(cookieOptions);
-  }
-
-  protected getCookie(name: string) {
-    return this.requestCookies.get(name)?.value ?? null;
-  }
-
-  protected setCookie(name: string, value: string) {
-    this.requestCookies.set({
-      name,
-      value,
-      ...this.cookieOptions,
-    });
-    this.responseCookies.set(name, value, this.cookieOptions);
-  }
-
-  protected deleteCookie(name: string) {
-    this.requestCookies.set({
-      name,
-      value: '',
-      ...this.cookieOptions,
-      maxAge: 0,
-    });
-    this.responseCookies.set(name, '', {
-      ...this.cookieOptions,
-      maxAge: 0,
-    });
-  }
-}
-
 function createSupabaseClientForRequest(req: Request, resHeaders: Headers) {
   const { supabaseUrl, supabaseKey } = getSupabaseConfig();
-  const requestCookies = new RequestCookies(req.headers);
-  const responseCookies = new ResponseCookies(resHeaders);
-  const storage = new FetchRequestAuthStorageAdapter(
-    requestCookies,
-    responseCookies,
-  );
 
-  return createSupabaseClient<Database>(supabaseUrl, supabaseKey, {
-    auth: {
-      storage,
+  return createServerClient<Database>(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return parseCookieHeader(req.headers.get('Cookie') ?? '');
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) =>
+          resHeaders.append('Set-Cookie', serializeCookieHeader(name, value, options))
+        );
+      },
     },
   });
 }

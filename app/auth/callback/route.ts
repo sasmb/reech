@@ -1,37 +1,15 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import type { Session } from '@supabase/supabase-js';
-import type { Database } from '@/lib/supabase-server';
+import { createClient } from '@/lib/supabase/server';
 
-type AuthChangeEvent =
-  | 'SIGNED_IN'
-  | 'SIGNED_OUT'
-  | 'TOKEN_REFRESHED'
-  | 'USER_UPDATED'
-  | string;
+export async function GET(request: Request) {
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get('code');
 
-interface AuthCallbackPayload {
-  event: AuthChangeEvent;
-  session: Session | null;
-}
-
-export async function POST(request: Request) {
-  const cookieStore = cookies();
-  const supabase = createRouteHandlerClient<Database>({
-    cookies: () => cookieStore,
-  });
-
-  const { event, session } = (await request.json()) as AuthCallbackPayload;
-
-  if (event === 'SIGNED_OUT') {
-    await supabase.auth.signOut();
-    return NextResponse.json({ success: true });
+  if (code) {
+    const supabase = await createClient();
+    await supabase.auth.exchangeCodeForSession(code);
   }
 
-  if (session) {
-    await supabase.auth.setSession(session);
-  }
-
-  return NextResponse.json({ success: true });
+  // URL to redirect to after sign in process completes
+  return NextResponse.redirect(requestUrl.origin);
 }

@@ -1,3 +1,4 @@
+import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import { rootDomain } from '@/lib/utils';
 
@@ -41,23 +42,61 @@ function extractSubdomain(request: NextRequest): string | null {
 }
 
 export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
+
+  // Refresh Supabase auth tokens
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // IMPORTANT: Avoid writing any logic between createServerClient and
+  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+  // issues with users being randomly logged out.
+
+  // IMPORTANT: DO NOT REMOVE auth.getUser()
+  await supabase.auth.getUser();
+
+  // Existing subdomain logic
   const { pathname } = request.nextUrl;
   const subdomain = extractSubdomain(request);
 
   if (subdomain) {
     // Block access to admin page from subdomains
     if (pathname.startsWith('/admin')) {
-      return NextResponse.redirect(new URL('/', request.url));
+      const redirectUrl = new URL('/', request.url);
+      supabaseResponse = NextResponse.redirect(redirectUrl);
+      return supabaseResponse;
     }
 
     // For the root path on a subdomain, rewrite to the subdomain page
     if (pathname === '/') {
-      return NextResponse.rewrite(new URL(`/s/${subdomain}`, request.url));
+      const rewriteUrl = new URL(`/s/${subdomain}`, request.url);
+      supabaseResponse = NextResponse.rewrite(rewriteUrl);
+      return supabaseResponse;
     }
   }
 
-  // On the root domain, allow normal access
-  return NextResponse.next();
+  // IMPORTANT: You *must* return the supabaseResponse object as it is.
+  return supabaseResponse;
 }
 
 export const config = {

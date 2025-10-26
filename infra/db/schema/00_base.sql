@@ -1,6 +1,12 @@
 -- ============================================================================
 -- BASE SCHEMA: Extensions, Types, and Foundation
 -- ============================================================================
+-- ⚠️  NOTE: This schema file has been superseded by the consolidated migration
+-- ⚠️  Use: infra/db/migrations/001_base_and_tenants_schema.sql instead
+-- ⚠️  
+-- ⚠️  This file is kept for reference only. Do NOT execute it separately
+-- ⚠️  as it uses DO blocks that may not work reliably in Supabase.
+-- ============================================================================
 -- This file contains:
 -- 1. Required PostgreSQL extensions
 -- 2. Common types and enums

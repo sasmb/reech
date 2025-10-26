@@ -1,6 +1,12 @@
 -- ============================================================================
 -- TENANT MANAGEMENT SCHEMA
 -- ============================================================================
+-- ⚠️  NOTE: This schema file has been superseded by the consolidated migration
+-- ⚠️  Use: infra/db/migrations/001_base_and_tenants_schema.sql instead
+-- ⚠️  
+-- ⚠️  This file is kept for reference only. Do NOT execute it separately
+-- ⚠️  as it depends on enum types that must be created first.
+-- ============================================================================
 -- This file contains:
 -- 1. Tenants table (global registry - NO store_id)
 -- 2. Store configurations table (1:1 with tenant - HAS store_id)
