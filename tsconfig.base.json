@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    // Target and Module Settings
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    
+    // JavaScript Support - DISABLED for TypeScript-only codebase
+    "allowJs": false,
+    "checkJs": false,
+    
+    // Strict Type Checking - ALL ENABLED
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    
+    // Additional Strict Checks for Maximum Safety
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    
+    // Module Resolution
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    
+    // Emit Settings
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "importHelpers": true,
+    
+    // Code Quality
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    // Interop Constraints
+    "verbatimModuleSyntax": false
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".next",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.test.tsx",
+    "**/*.spec.tsx"
+  ]
+}
