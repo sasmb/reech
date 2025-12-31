@@ -1,5 +1,10 @@
 # Reech
 
+building with finetuned ai agents,pre trained conversational capabiities etc.
+
+combine ecommerce functionality with an agentic whatsapp bot for seemless ecommerce
+
+
 Monorepo containing:
 
 - **reech-saas/** - Multi-tenant SaaS application built with Next.js 15 and MedusaJS
